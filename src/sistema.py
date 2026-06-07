@@ -1,17 +1,14 @@
 import json
 import os
-import sys
-import io
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 DADOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dados.json")
 
 
-# ============================================================
-# 1. MODULOS DA COLONIA  (reaproveitado do MGPEB)
+# -----------------------------------------------------------
+# 1. MODULOS DA COLONIA 
 #    Dicionario indexado por ID para acesso rapido O(1)
-# ============================================================
+# ----------------------------------------------------------- 
 
 MODULOS = {
     "MOD-EN-001": {"nome": "Geradores + Paineis Solares",          "prioridade": 1, "criticidade": "Alta"},
@@ -23,11 +20,11 @@ MODULOS = {
 }
 
 
-# ============================================================
+# -----------------------------------------------------------
 # 2. LOG DE EVENTOS  (NOVO — 10 registros pre-carregados)
 #    Representa o historico operacional da colonia.
 #    Turno 4 contem a inconsistencia proposital detectada.
-# ============================================================
+# -----------------------------------------------------------
 
 LOG_EVENTOS = [
     {"turno": 1, "tipo": "ALERTA",        "severidade": "CRITICO", "descricao": "Tempestade de areia detectada — paineis solares desligados"},
@@ -43,12 +40,12 @@ LOG_EVENTOS = [
 ]
 
 
-# ============================================================
+# -------------------------------------------------------
 # 3. FILA DE ALERTAS  (NOVO)
 #    Alertas sao enfileirados por ordem de chegada e
 #    processados do mais critico para o menos critico
 #    via ordenacao por severidade antes de exibir.
-# ============================================================
+# -------------------------------------------------------
 
 fila_alertas = []
 
@@ -69,11 +66,11 @@ def processar_fila_alertas():
     fila_alertas.clear()
 
 
-# ============================================================
-# 4. PILHA DE EVENTOS CRITICOS  (NOVO)
+# ---------------------------------------------------------
+# 4. PILHA DE EVENTOS CRITICOS
 #    Registra LIFO os ultimos eventos criticos analisados.
 #    Permite revisar a sequencia mais recente de falhas.
-# ============================================================
+# ---------------------------------------------------------
 
 pilha_criticos = []
 
@@ -89,9 +86,9 @@ def exibir_pilha_criticos():
         print(f"    >> {evento}")
 
 
-# ============================================================
-# 5. CARREGAMENTO DE DADOS  (reaproveitado do SGCE)
-# ============================================================
+# -------------------------------
+# 5. CARREGAMENTO DE DADOS
+# -------------------------------
 
 def carregar_dados():
     if not os.path.exists(DADOS_PATH):
@@ -100,12 +97,12 @@ def carregar_dados():
         return json.load(f)
 
 
-# ============================================================
-# 6. DETECCAO DE INCONSISTENCIAS  (NOVO)
+# -----------------------------------------------------------
+# 6. DETECCAO DE INCONSISTENCIAS
 #    Regra: suporte_vida nunca pode ser 0 — e um sistema
 #    critico com prioridade maxima e consumo constante.
 #    Turno 4 contem esta inconsistencia propositalmente.
-# ============================================================
+# -----------------------------------------------------------
 
 def detectar_inconsistencias(historico):
     inconsistencias = []
@@ -125,11 +122,11 @@ def detectar_inconsistencias(historico):
     return inconsistencias
 
 
-# ============================================================
-# 7. MATRIZ DE LEITURAS  (NOVO)
+# -----------------------------------------------------------
+# 7. MATRIZ DE LEITURAS
 #    Lista de listas: matriz[turno][variavel]
 #    Linhas = turnos (1-6), Colunas = variaveis de energia
-# ============================================================
+# -----------------------------------------------------------
 
 COLUNAS_MATRIZ = ["solar_kw", "eolico_kw", "bateria_pct", "consumo_total_kw", "temperatura"]
 
@@ -156,12 +153,12 @@ def exibir_matriz(matriz):
         print(f"  {i+1:>6}  {valores}")
 
 
-# ============================================================
-# 8. PORTAS LOGICAS  (reaproveitado do MGPEB)
+# -----------------------------------------------------------
+# 8. PORTAS LOGICAS
 #    AND: condicao OK somente se TODOS os parametros OK
 #    OR:  alerta ativo se QUALQUER parametro critico
 #    NOT: inverte o resultado da porta OR
-# ============================================================
+# -----------------------------------------------------------
 
 def porta_and(bateria_ok, comunicacao_ok, modulos_criticos_ok):
     return bateria_ok and comunicacao_ok and modulos_criticos_ok
@@ -173,11 +170,11 @@ def porta_not(resultado_or):
     return not resultado_or
 
 
-# ============================================================
-# 9. TABELA DE STATUS DOS MODULOS  (NOVO)
+# -----------------------------------------------------
+# 9. TABELA DE STATUS DOS MODULOS
 #    Exibe o status binario (0/1) de cada modulo como
 #    NORMAL / FALHA com prioridade operacional.
-# ============================================================
+# -----------------------------------------------------
 
 def exibir_tabela_modulos(colonia):
     status_bin = colonia["modulos"]
@@ -191,14 +188,13 @@ def exibir_tabela_modulos(colonia):
         print(f"  {mod_id:<12}  {info['nome']:<42}  {info['prioridade']:>4}  {status_str:<8}  {info['criticidade']}")
 
 
-# ============================================================
-# 10. REGRAS LOGICAS + CLASSIFICACAO  (reaproveitado do SGCE,
-#     adaptado para usar as portas logicas do MGPEB)
+# -------------------------------------------------------------------
+# 10. REGRAS LOGICAS + CLASSIFICACAO
 #
 #     Expressao booleana principal do diagnostico:
 #     EMERGENCIA = (reserva < 20 AND consumo > geracao) OR tempestade
 #     NORMAL     = NOT(EMERGENCIA) AND NOT(consumo > geracao)
-# ============================================================
+# -------------------------------------------------------------------
 
 def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com):
     reserva_critica   = reserva_pct < 20
@@ -249,9 +245,9 @@ def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com)
     return nivel
 
 
-# ============================================================
-# 11. ANALISE DE ENERGIA  (reaproveitado do SGCE)
-# ============================================================
+# -----------------------
+# 11. ANALISE DE ENERGIA
+# -----------------------
 
 def analisar_energia(geracao, consumo, reserva_kwh, consumo_por_sistema):
     cobertura = (geracao / consumo * 100) if consumo > 0 else 0
@@ -264,10 +260,9 @@ def analisar_energia(geracao, consumo, reserva_kwh, consumo_por_sistema):
         print(f"    {sistema:<15}: {valor:>3} kW  ({pct:.1f}%)")
 
 
-# ============================================================
-# 12. REGRESSAO LINEAR  (reaproveitado do SGCE — do zero,
-#     sem bibliotecas externas, metodo dos minimos quadrados)
-# ============================================================
+# ---------------------
+# 12. REGRESSAO LINEAR
+# ---------------------
 
 def regressao_linear(x_lista, y_lista, x_novo):
     n   = len(x_lista)
@@ -299,14 +294,14 @@ def prever_consumo_turno(historico, turno_novo):
     return resultado
 
 
-# ============================================================
-# 13. OPCOES DO MENU  (NOVO)
-# ============================================================
+# --------------------
+# 13. OPCOES DO MENU
+# --------------------
 
 def opcao_visualizar_colonia(historico):
-    print("\n========================================")
+    print("\n--------------------------------------")
     print("  [1] ESTADO DA COLONIA — TURNO ATUAL")
-    print("========================================")
+    print("----------------------------------------")
 
     registro = historico[-1]
     turno    = registro["turno"]
@@ -356,13 +351,13 @@ def opcao_visualizar_colonia(historico):
     print("\n--- EVENTOS CRITICOS (PILHA LIFO) ---")
     exibir_pilha_criticos()
 
-    print("\n========================================")
+    print("\n-----------------------------------------------------------")
 
 
 def opcao_consultar_modulo(historico):
-    print("\n========================================")
+    print("\n-----------------------")
     print("  [2] CONSULTAR MODULO")
-    print("========================================")
+    print("-------------------------")
     colonia = historico[-1]["dados"]
     exibir_tabela_modulos(colonia)
     print()
@@ -386,14 +381,14 @@ def opcao_consultar_modulo(historico):
     for turno, s in historico_modulo:
         marcador = "OK " if s == 1 else "FALHA"
         print(f"    Turno {turno}: {marcador}")
-    print("========================================")
+    print("-----------------------------------------------------------")
 
 
 def opcao_executar_previsao(historico):
-    print("\n========================================")
+    print("\n-----------------------------------------------------------")
     print("  [3] PREVISAO POR REGRESSAO LINEAR")
     print("      (Minimos quadrados — sem bibliotecas externas)")
-    print("========================================")
+    print("-----------------------------------------------------------")
 
     print("\n  -- Previsao de geracao eolica --")
     try:
@@ -431,13 +426,13 @@ def opcao_executar_previsao(historico):
     else:
         print(f"  OK: geracao prevista ({geracao_total_prevista:.1f} kW) cobre consumo previsto ({cons_previsto} kW).")
         print("  Recomendacao: armazenar excedente na bateria.")
-    print("========================================")
+    print("-----------------------------------------------------------")
 
 
 def opcao_simular_cenario(historico):
-    print("\n========================================")
+    print("\n---------------------------------------")
     print("  [4] SIMULACAO DE CENARIO OPERACIONAL")
-    print("========================================")
+    print("-----------------------------------------")
     print("\n  Cenarios disponiveis:")
     print("    [A] Tempestade de areia severa")
     print("    [B] Falha no modulo de energia (MOD-EN-001)")
@@ -491,39 +486,39 @@ def opcao_simular_cenario(historico):
     processar_fila_alertas()
     print("\n--- EVENTOS CRITICOS ---")
     exibir_pilha_criticos()
-    print("========================================")
+    print("-----------------------------------------------------------")
 
 
 def opcao_historico_eventos():
-    print("\n========================================")
+    print("\n----------------------------")
     print("  LOG DE EVENTOS DA COLONIA")
-    print("========================================")
+    print("------------------------------")
     print(f"\n  {'TURNO':>6}  {'TIPO':<15}  {'SEVERIDADE':<10}  DESCRICAO")
     print("  " + "-" * 80)
     for ev in LOG_EVENTOS:
         print(f"  {ev['turno']:>6}  {ev['tipo']:<15}  {ev['severidade']:<10}  {ev['descricao']}")
-    print("========================================")
+    print("-----------------------------------------------------------")
 
 
 def opcao_matriz_leituras(historico):
-    print("\n========================================")
+    print("\n------------------------------------------")
     print("  MATRIZ DE LEITURAS (turnos x variaveis)")
-    print("========================================\n")
+    print("--------------------------------------------\n")
     matriz = montar_matriz(historico)
     exibir_matriz(matriz)
-    print("========================================")
+    print("-----------------------------------------------------------")
 
 
-# ============================================================
-# 14. MENU PRINCIPAL  (NOVO)
-# ============================================================
+# -----------------------------------------------------------
+# 14. MENU PRINCIPAL
+# -----------------------------------------------------------
 
 def menu_principal(historico):
     while True:
-        print("\n========================================")
+        print("\n-------------------------------------")
         print("  SGCE — SISTEMA DE MONITORAMENTO")
         print("       COLONIA AURORA SIGER")
-        print("========================================")
+        print("-------------------------------------")
         print("  [1] Visualizar estado da colonia")
         print("  [2] Consultar modulo especifico")
         print("  [3] Executar previsao (regressao linear)")
@@ -531,7 +526,7 @@ def menu_principal(historico):
         print("  [5] Exibir log de eventos")
         print("  [6] Exibir matriz de leituras")
         print("  [0] Sair")
-        print("========================================")
+        print("-------------------------------------")
         opcao = input("  Escolha uma opcao: ").strip()
 
         if opcao == "1":
@@ -553,9 +548,9 @@ def menu_principal(historico):
             print("  Opcao invalida. Tente novamente.")
 
 
-# ============================================================
+# -----------------------------------------------------------
 # 15. ENTRADA PRINCIPAL
-# ============================================================
+# -----------------------------------------------------------
 
 if __name__ == "__main__":
     historico = carregar_dados()
