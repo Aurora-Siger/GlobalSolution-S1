@@ -21,23 +21,15 @@ MODULOS = {
 
 
 # -----------------------------------------------------------
-# 2. LOG DE EVENTOS  (NOVO — 10 registros pre-carregados)
-#    Representa o historico operacional da colonia.
-#    Turno 4 contem a inconsistencia proposital detectada.
+# 2. MAPA MODULO → CAMPO DE CONSUMO
+#    Usado para cruzar status binario com consumo registrado.
 # -----------------------------------------------------------
 
-LOG_EVENTOS = [
-    {"turno": 1, "tipo": "ALERTA",        "severidade": "CRITICO", "descricao": "Tempestade de areia detectada — paineis solares desligados"},
-    {"turno": 1, "tipo": "MODO",          "severidade": "CRITICO", "descricao": "Modo EMERGENCIA ativado — colonia operando 100% em bateria"},
-    {"turno": 1, "tipo": "ALERTA",        "severidade": "CRITICO", "descricao": "Qualidade de comunicacao: 45% — enlace com Terra comprometido"},
-    {"turno": 2, "tipo": "NORMAL",        "severidade": "NORMAL",  "descricao": "Tempestade encerrada — paineis solares religados"},
-    {"turno": 3, "tipo": "ALERTA",        "severidade": "ALERTA",  "descricao": "Bateria em 29% — abaixo do limite de seguranca (30%)"},
-    {"turno": 3, "tipo": "MODO",          "severidade": "ALERTA",  "descricao": "Modo ECONOMIA ativado — mineracao suspensa temporariamente"},
-    {"turno": 4, "tipo": "INCONSISTENCIA","severidade": "CRITICO", "descricao": "ANOMALIA: consumo suporte_vida = 0 kW — leitura de sensor invalida"},
-    {"turno": 4, "tipo": "ALERTA",        "severidade": "ALERTA",  "descricao": "Nova tempestade — qualidade de comunicacao: 52%"},
-    {"turno": 5, "tipo": "ALERTA",        "severidade": "ALERTA",  "descricao": "Bateria em 20% — proximo ao limite critico de operacao"},
-    {"turno": 6, "tipo": "NORMAL",        "severidade": "NORMAL",  "descricao": "Colonia estabilizada — todos os sistemas dentro do esperado"},
-]
+MODULO_CONSUMO_MAP = {
+    "MOD-SC-004": "ciencia",
+    "MOD-MN-005": "mineracao",
+    "MOD-LG-006": "logistica",
+}
 
 
 # -------------------------------------------------------
@@ -137,28 +129,82 @@ def carregar_dados():
 
 
 # -----------------------------------------------------------
-# 6. DETECCAO DE INCONSISTENCIAS
-#    Regra: suporte_vida nunca pode ser 0 — e um sistema
-#    critico com prioridade maxima e consumo constante.
-#    Turno 4 contem esta inconsistencia propositalmente.
+# 6. DETECCAO DE INCONSISTENCIAS (dinamica)
+#    Cruza variaveis para encontrar contradicoes nos dados.
 # -----------------------------------------------------------
+
+def _verificar_inconsistencias_turno(turno, d):
+    msgs = []
+    for mod_id, campo in MODULO_CONSUMO_MAP.items():
+        if d["modulos"][mod_id] == 0 and d["consumo"][campo] > 0:
+            nome = MODULOS[mod_id]["nome"]
+            msgs.append(
+                f"Turno {turno}: {mod_id} ({nome}) em FALHA mas consumo_{campo} = {d['consumo'][campo]:.0f} kW registrado"
+            )
+    if d["clima"]["tempestade_areia"] and d["energia"]["solar"]["geracao_kw"] > 0:
+        msgs.append(
+            f"Turno {turno}: tempestade ativa mas solar = {d['energia']['solar']['geracao_kw']:.0f} kW "
+            f"(paineis deveriam estar desligados)"
+        )
+    vento = d["energia"]["eolico"]["velocidade_vento"]
+    eolico = d["energia"]["eolico"]["geracao_kw"]
+    if vento > 35 and eolico == 0:
+        msgs.append(
+            f"Turno {turno}: vento = {vento:.0f} km/h mas geracao eolica = 0 kW (turbina inativa sem justificativa)"
+        )
+    return msgs
 
 def detectar_inconsistencias(historico):
     inconsistencias = []
     for registro in historico:
-        turno = registro["turno"]
-        sv = registro["dados"]["consumo"]["suporte_vida"]
-        if sv == 0:
-            inconsistencias.append(
-                f"Turno {turno}: suporte_vida = 0 kW — impossivel, sistema critico sempre ativo"
-            )
-        geracao = (registro["dados"]["energia"]["solar"]["geracao_kw"] +
-                   registro["dados"]["energia"]["eolico"]["geracao_kw"])
-        if geracao > 130:
-            inconsistencias.append(
-                f"Turno {turno}: geracao total = {geracao} kW — acima da capacidade instalada"
-            )
+        inconsistencias.extend(_verificar_inconsistencias_turno(registro["turno"], registro["dados"]))
     return inconsistencias
+
+
+# -----------------------------------------------------------
+# 7. LOG DE EVENTOS
+# -----------------------------------------------------------
+
+def gerar_log_eventos(historico):
+    eventos = []
+    for registro in historico:
+        turno = registro["turno"]
+        d     = registro["dados"]
+        bat_pct = round((d["energia"]["bateria"]["carga_atual"] /
+                         d["energia"]["bateria"]["capacidade_max"]) * 100, 1)
+        qual = d["clima"]["qualidade_comunicacao"]
+
+        if d["clima"]["tempestade_areia"]:
+            eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "CRITICO",
+                            "descricao": "Tempestade de areia ativa — paineis desligados, operando em bateria"})
+
+        if bat_pct < 20:
+            eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "CRITICO",
+                            "descricao": f"Bateria em {bat_pct:.0f}% — nivel CRITICO (abaixo de 20%)"})
+        elif bat_pct < 30:
+            eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "ALERTA",
+                            "descricao": f"Bateria em {bat_pct:.0f}% — abaixo do limite de seguranca (30%)"})
+
+        for mod_id, status in d["modulos"].items():
+            if status == 0:
+                eventos.append({"turno": turno, "tipo": "FALHA", "severidade": "CRITICO",
+                                "descricao": f"Modulo {mod_id} ({MODULOS[mod_id]['nome']}) em FALHA"})
+
+        if qual < 40:
+            sev = "CRITICO"
+        elif qual < 60:
+            sev = "ALERTA"
+        else:
+            sev = None
+        if sev:
+            eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": sev,
+                            "descricao": f"Qualidade de comunicacao: {qual:.0f}% — enlace comprometido"})
+
+        for msg in _verificar_inconsistencias_turno(turno, d):
+            eventos.append({"turno": turno, "tipo": "INCONSISTENCIA", "severidade": "CRITICO",
+                            "descricao": msg})
+
+    return sorted(eventos, key=lambda e: (e["turno"], ORDEM_SEVERIDADE.get(e["severidade"], 99)))
 
 
 # -----------------------------------------------------------
@@ -475,73 +521,15 @@ def opcao_executar_previsao(historico):
     print("-----------------------------------------------------------")
 
 
-def opcao_simular_cenario(historico):
-    print("\n---------------------------------------")
-    print("  [4] SIMULACAO DE CENARIO OPERACIONAL")
-    print("-----------------------------------------")
-    print("\n  Cenarios disponiveis:")
-    print("    [A] Tempestade de areia severa")
-    print("    [B] Falha no modulo de energia (MOD-EN-001)")
-    print("    [C] Bateria critica (reserva < 15%)")
 
-    opcao = input("\n  Escolha o cenario (A/B/C): ").strip().upper()
-
-    if opcao == "A":
-        print("\n  SIMULANDO: Tempestade de areia severa")
-        print("  Geracao solar: 0 kW (paineis desligados)")
-        geracao_sim = historico[-1]["dados"]["energia"]["eolico"]["geracao_kw"]
-        consumo_sim = sum(historico[-1]["dados"]["consumo"].values())
-        reserva_sim = (historico[-1]["dados"]["energia"]["bateria"]["carga_atual"] /
-                       historico[-1]["dados"]["energia"]["bateria"]["capacidade_max"]) * 100
-        print(f"  Geracao disponivel (so eolico): {geracao_sim} kW")
-        print(f"  Consumo atual: {consumo_sim} kW")
-        print("\n  Diagnostico:")
-        decisao_automatica(geracao_sim, consumo_sim, reserva_sim, True, 40)
-
-    elif opcao == "B":
-        print("\n  SIMULANDO: Falha em MOD-EN-001 (Geradores + Paineis Solares)")
-        print("  Geracao solar e eolica zerada — modulo de energia inativo.")
-        geracao_sim = 0
-        consumo_sim = sum(historico[-1]["dados"]["consumo"].values())
-        reserva_sim = (historico[-1]["dados"]["energia"]["bateria"]["carga_atual"] /
-                       historico[-1]["dados"]["energia"]["bateria"]["capacidade_max"]) * 100
-        bateria_kwh = historico[-1]["dados"]["energia"]["bateria"]["carga_atual"]
-        autonomia   = bateria_kwh / consumo_sim if consumo_sim > 0 else 0
-        print(f"  Reserva de bateria: {reserva_sim:.0f}% ({bateria_kwh} kWh)")
-        print(f"  Autonomia estimada: {autonomia:.1f} hora(s)")
-        print("\n  Diagnostico:")
-        decisao_automatica(geracao_sim, consumo_sim, reserva_sim, False, 80)
-        enfileirar_alerta("CRITICO", "Simulacao: MOD-EN-001 em falha — autonomia limitada")
-        empilhar_critico("SIMULACAO: Falha MOD-EN-001 — geracao zerada")
-
-    elif opcao == "C":
-        print("\n  SIMULANDO: Bateria critica (reserva = 12%)")
-        geracao_sim = (historico[-1]["dados"]["energia"]["solar"]["geracao_kw"] +
-                       historico[-1]["dados"]["energia"]["eolico"]["geracao_kw"])
-        consumo_sim = sum(historico[-1]["dados"]["consumo"].values())
-        reserva_sim = 12.0
-        print(f"  Geracao: {geracao_sim} kW | Consumo: {consumo_sim} kW | Bateria: 12%")
-        print("\n  Diagnostico:")
-        decisao_automatica(geracao_sim, consumo_sim, reserva_sim, False, 80)
-
-    else:
-        print("  Opcao invalida.")
-        return
-
-    print("\n--- ALERTAS GERADOS ---")
-    processar_fila_alertas()
-    print("\n--- EVENTOS CRITICOS ---")
-    exibir_pilha_criticos()
-    print("-----------------------------------------------------------")
-
-
-def opcao_historico_eventos():
+def opcao_historico_eventos(historico):
     print("\n----------------------------")
     print("  LOG DE EVENTOS DA COLONIA")
     print("------------------------------")
+    eventos = gerar_log_eventos(historico)
     print(f"\n  {'TURNO':>6}  {'TIPO':<15}  {'SEVERIDADE':<10}  DESCRICAO")
     print("  " + "-" * 80)
-    for ev in LOG_EVENTOS:
+    for ev in eventos:
         print(f"  {ev['turno']:>6}  {ev['tipo']:<15}  {ev['severidade']:<10}  {ev['descricao']}")
     print("-----------------------------------------------------------")
 
@@ -568,9 +556,8 @@ def menu_principal(historico):
         print("  [1] Visualizar estado da colonia")
         print("  [2] Consultar modulo especifico")
         print("  [3] Executar previsao (regressao linear)")
-        print("  [4] Simular cenario operacional")
-        print("  [5] Exibir log de eventos")
-        print("  [6] Exibir matriz de leituras")
+        print("  [4] Exibir log de eventos")
+        print("  [5] Exibir matriz de leituras")
         print("  [0] Sair")
         print("-------------------------------------")
         opcao = input("  Escolha uma opcao: ").strip()
@@ -582,10 +569,8 @@ def menu_principal(historico):
         elif opcao == "3":
             opcao_executar_previsao(historico)
         elif opcao == "4":
-            opcao_simular_cenario(historico)
+            opcao_historico_eventos(historico)
         elif opcao == "5":
-            opcao_historico_eventos()
-        elif opcao == "6":
             opcao_matriz_leituras(historico)
         elif opcao == "0":
             print("\n  Sistema encerrado.\n")
