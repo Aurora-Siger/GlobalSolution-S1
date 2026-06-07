@@ -466,7 +466,7 @@ def opcao_executar_previsao(historico):
         horas = bateria / delta if delta > 0 else float("inf")
         print(f"  ALERTA: consumo previsto ({cons_previsto:.1f} kW) supera geracao prevista ({geracao_total_prevista:.1f} kW).")
         print(f"  Deficit de {delta:.1f} kW — reserva ({bateria:.0f} kWh) se esgotaria em {horas:.1f} hora(s).")
-        print("  Recomendacao: reduzir consumo de mineracao e ciencia antes do proximo turno.")
+        print("  Recomendacao: reduzir consumo de modulos não essenciais antes do proximo turno.")
         enfileirar_alerta("ALERTA", f"Previsao T{turno_proximo}: consumo {cons_previsto:.1f} kW > geracao {geracao_total_prevista:.1f} kW")
     else:
         excedente = geracao_total_prevista - cons_previsto
