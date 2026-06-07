@@ -316,21 +316,20 @@ def regressao_linear(x_lista, y_lista, x_novo):
     b = (sy - a * sx) / n
     return round(a * x_novo + b, 1)
 
+def prever_vento_turno(historico, turno_novo):
+    x = [r["turno"]                                              for r in historico]
+    y = [r["dados"]["energia"]["eolico"]["velocidade_vento"]     for r in historico]
+    return regressao_linear(x, y, turno_novo)
+
 def prever_geracao_eolica(historico, vento_novo):
     x = [r["dados"]["energia"]["eolico"]["velocidade_vento"] for r in historico]
     y = [r["dados"]["energia"]["eolico"]["geracao_kw"]        for r in historico]
-    resultado = regressao_linear(x, y, vento_novo)
-    print(f"  Vento informado    : {vento_novo} km/h")
-    print(f"  Geracao prevista   : {resultado} kW")
-    return resultado
+    return regressao_linear(x, y, vento_novo)
 
 def prever_consumo_turno(historico, turno_novo):
     x = [r["turno"]                          for r in historico]
     y = [sum(r["dados"]["consumo"].values()) for r in historico]
-    resultado = regressao_linear(x, y, turno_novo)
-    print(f"  Turno informado    : {turno_novo}")
-    print(f"  Consumo previsto   : {resultado} kW")
-    return resultado
+    return regressao_linear(x, y, turno_novo)
 
 
 # --------------------
@@ -429,42 +428,50 @@ def opcao_executar_previsao(historico):
     print("      (Minimos quadrados — sem bibliotecas externas)")
     print("-----------------------------------------------------------")
 
-    print("\n  -- Previsao de geracao eolica --")
-    try:
-        vento = float(input("  Informe a velocidade do vento (km/h): "))
-    except ValueError:
-        print("  Valor invalido.")
-        return
-    gen_prevista = prever_geracao_eolica(historico, vento)
+    turno_proximo = historico[-1]["turno"] + 1
 
-    print("\n  -- Previsao de consumo por turno --")
-    try:
-        turno = int(input("  Informe o numero do turno futuro: "))
-    except ValueError:
-        print("  Valor invalido.")
-        return
-    cons_previsto = prever_consumo_turno(historico, turno)
+    print(f"\n  Previsao automatica para o turno {turno_proximo}:")
+    print(f"  Dados historicos utilizados: turnos 1 a {historico[-1]['turno']}\n")
 
-    print("\n  -- Impacto na decisao --")
+    # 1. Prever vento do proximo turno pela tendencia historica
+    vento_previsto = prever_vento_turno(historico, turno_proximo)
+    vento_previsto = max(0, vento_previsto)
+
+    # 2. Usar vento previsto para estimar geracao eolica
+    gen_eolica_prevista = prever_geracao_eolica(historico, vento_previsto)
+    gen_eolica_prevista = max(0, gen_eolica_prevista)
+
+    # 3. Prever consumo total do proximo turno
+    cons_previsto = prever_consumo_turno(historico, turno_proximo)
+    cons_previsto = max(0, cons_previsto)
+
+    # Solar: mantém média histórica como estimativa conservadora
+    solar_medio = sum(r["dados"]["energia"]["solar"]["geracao_kw"] for r in historico) / len(historico)
+    geracao_total_prevista = solar_medio + gen_eolica_prevista
+
+    print(f"  -- Vento --")
+    print(f"  Tendencia historica → vento previsto : {vento_previsto:.1f} km/h")
+    print(f"\n  -- Geracao eolica --")
+    print(f"  Vento previsto ({vento_previsto:.1f} km/h) → geracao eolica : {gen_eolica_prevista:.1f} kW")
+    print(f"  Solar (media historica)              : {solar_medio:.1f} kW")
+    print(f"  Geracao total prevista               : {geracao_total_prevista:.1f} kW")
+    print(f"\n  -- Consumo --")
+    print(f"  Tendencia historica → consumo previsto: {cons_previsto:.1f} kW")
+
+    print(f"\n  -- Impacto na decisao --")
     bateria = historico[-1]["dados"]["energia"]["bateria"]["carga_atual"]
-    cap_max = historico[-1]["dados"]["energia"]["bateria"]["capacidade_max"]
-    reserva = (bateria / cap_max) * 100
-    consumo_atual = sum(historico[-1]["dados"]["consumo"].values())
-    geracao_atual = (historico[-1]["dados"]["energia"]["solar"]["geracao_kw"] +
-                     historico[-1]["dados"]["energia"]["eolico"]["geracao_kw"])
-
-    geracao_total_prevista = historico[-1]["dados"]["energia"]["solar"]["geracao_kw"] + gen_prevista
 
     if cons_previsto > geracao_total_prevista:
         delta = cons_previsto - geracao_total_prevista
         horas = bateria / delta if delta > 0 else float("inf")
-        print(f"  ALERTA: consumo previsto ({cons_previsto} kW) supera geracao prevista ({geracao_total_prevista:.1f} kW).")
-        print(f"  A reserva de bateria ({bateria} kWh) se esgotaria em {horas:.1f} hora(s).")
-        print("  Recomendacao: reduzir consumo de mineracao e ciencia antes do turno projetado.")
-        enfileirar_alerta("ALERTA", f"Previsao turno {turno}: consumo {cons_previsto} kW > geracao {geracao_total_prevista:.1f} kW")
+        print(f"  ALERTA: consumo previsto ({cons_previsto:.1f} kW) supera geracao prevista ({geracao_total_prevista:.1f} kW).")
+        print(f"  Deficit de {delta:.1f} kW — reserva ({bateria:.0f} kWh) se esgotaria em {horas:.1f} hora(s).")
+        print("  Recomendacao: reduzir consumo de mineracao e ciencia antes do proximo turno.")
+        enfileirar_alerta("ALERTA", f"Previsao T{turno_proximo}: consumo {cons_previsto:.1f} kW > geracao {geracao_total_prevista:.1f} kW")
     else:
-        print(f"  OK: geracao prevista ({geracao_total_prevista:.1f} kW) cobre consumo previsto ({cons_previsto} kW).")
-        print("  Recomendacao: armazenar excedente na bateria.")
+        excedente = geracao_total_prevista - cons_previsto
+        print(f"  OK: geracao prevista ({geracao_total_prevista:.1f} kW) cobre consumo previsto ({cons_previsto:.1f} kW).")
+        print(f"  Excedente estimado de {excedente:.1f} kW — armazenar na bateria.")
     print("-----------------------------------------------------------")
 
 
