@@ -208,7 +208,7 @@ def gerar_log_eventos(historico):
 
 
 # -----------------------------------------------------------
-# 7. MATRIZ DE LEITURAS
+# 8. MATRIZ DE LEITURAS
 #    Lista de listas: matriz[turno][variavel]
 #    Linhas = turnos (1-6), Colunas = variaveis de energia
 # -----------------------------------------------------------
@@ -239,7 +239,7 @@ def exibir_matriz(matriz):
 
 
 # -----------------------------------------------------------
-# 8. PORTAS LOGICAS
+# 9. PORTAS LOGICAS
 #    AND: condicao OK somente se TODOS os parametros OK
 #    OR:  alerta ativo se QUALQUER parametro critico
 #    NOT: inverte o resultado da porta OR
@@ -256,7 +256,7 @@ def porta_not(resultado_or):
 
 
 # -----------------------------------------------------
-# 9. TABELA DE STATUS DOS MODULOS
+# 10. TABELA DE STATUS DOS MODULOS
 #    Exibe o status binario (0/1) de cada modulo como
 #    NORMAL / FALHA com prioridade operacional.
 # -----------------------------------------------------
@@ -274,7 +274,7 @@ def exibir_tabela_modulos(colonia):
 
 
 # -------------------------------------------------------------------
-# 10. REGRAS LOGICAS + CLASSIFICACAO
+# 11. REGRAS LOGICAS + CLASSIFICACAO
 #
 #     Expressao booleana principal do diagnostico:
 #     EMERGENCIA = (reserva < 20 AND consumo > geracao) OR tempestade
@@ -331,7 +331,7 @@ def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com)
 
 
 # -----------------------
-# 11. ANALISE DE ENERGIA
+# 12. ANALISE DE ENERGIA
 # -----------------------
 
 def analisar_energia(geracao, consumo, reserva_kwh, consumo_por_sistema):
@@ -346,7 +346,7 @@ def analisar_energia(geracao, consumo, reserva_kwh, consumo_por_sistema):
 
 
 # ---------------------
-# 12. REGRESSAO LINEAR
+# 13. REGRESSAO LINEAR
 # ---------------------
 
 def regressao_linear(x_lista, y_lista, x_novo):
@@ -379,7 +379,7 @@ def prever_consumo_turno(historico, turno_novo):
 
 
 # --------------------
-# 13. OPCOES DO MENU
+# 14. OPCOES DO MENU
 # --------------------
 
 def opcao_visualizar_colonia(historico):
@@ -544,7 +544,7 @@ def opcao_matriz_leituras(historico):
 
 
 # -----------------------------------------------------------
-# 14. MENU PRINCIPAL
+# 15. MENU PRINCIPAL
 # -----------------------------------------------------------
 
 def menu_principal(historico):
@@ -580,7 +580,7 @@ def menu_principal(historico):
 
 
 # -----------------------------------------------------------
-# 15. ENTRADA PRINCIPAL
+# 16. ENTRADA PRINCIPAL
 # -----------------------------------------------------------
 
 if __name__ == "__main__":
