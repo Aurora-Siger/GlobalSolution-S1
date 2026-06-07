@@ -26,6 +26,9 @@ MODULOS = {
 # -----------------------------------------------------------
 
 MODULO_CONSUMO_MAP = {
+    "MOD-EN-001": "energia",
+    "MOD-SV-002": "suporte_vida",
+    "MOD-HB-003": "habitacao",
     "MOD-SC-004": "ciencia",
     "MOD-MN-005": "mineracao",
     "MOD-LG-006": "logistica",
@@ -76,6 +79,7 @@ def exibir_pilha_criticos():
     print(f"\n  Ultimos {len(pilha_criticos)} evento(s) critico(s) — ordem LIFO (mais recente primeiro):")
     for evento in reversed(pilha_criticos):
         print(f"    >> {evento}")
+    pilha_criticos.clear()
 
 
 # -------------------------------
@@ -105,7 +109,6 @@ def carregar_dados():
                     },
                     "clima": {
                         "temperatura":           float(row["temperatura"]),
-                        "vento_kmh":             float(row["vento_kmh"]),
                         "tempestade_areia":      row["tempestade"] == "1",
                         "radiacao":              row["radiacao"],
                         "qualidade_comunicacao": float(row["qualidade_com"]),
@@ -245,14 +248,14 @@ def exibir_matriz(matriz):
 #    NOT: inverte o resultado da porta OR
 # -----------------------------------------------------------
 
-def porta_and(bateria_ok, comunicacao_ok, modulos_criticos_ok):
-    return bateria_ok and comunicacao_ok and modulos_criticos_ok
+def porta_and(condicao_a, condicao_b, condicao_c):
+    return condicao_a and condicao_b and condicao_c
 
-def porta_or(energia_baixa, comunicacao_falha):
-    return energia_baixa or comunicacao_falha
+def porta_or(condicao_a, condicao_b):
+    return condicao_a or condicao_b
 
-def porta_not(resultado_or):
-    return not resultado_or
+def porta_not(condicao):
+    return not condicao
 
 
 # -----------------------------------------------------
@@ -518,6 +521,9 @@ def opcao_executar_previsao(historico):
         excedente = geracao_total_prevista - cons_previsto
         print(f"  OK: geracao prevista ({geracao_total_prevista:.1f} kW) cobre consumo previsto ({cons_previsto:.1f} kW).")
         print(f"  Excedente estimado de {excedente:.1f} kW — armazenar na bateria.")
+
+    print("\n--- ALERTAS PENDENTES ---")
+    processar_fila_alertas()
     print("-----------------------------------------------------------")
 
 
