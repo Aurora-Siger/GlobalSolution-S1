@@ -26,7 +26,6 @@ MODULOS = {
 # -----------------------------------------------------------
 
 MODULO_CONSUMO_MAP = {
-    "MOD-EN-001": "energia",
     "MOD-SV-002": "suporte_vida",
     "MOD-HB-003": "habitacao",
     "MOD-SC-004": "ciencia",
