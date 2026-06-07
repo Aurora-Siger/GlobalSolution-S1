@@ -1,0 +1,9 @@
+turno,solar_kw,paineis_ativos,eolico_kw,velocidade_vento,bateria_atual,bateria_max,consumo_sv,consumo_hab,consumo_log,consumo_cien,consumo_min,temperatura,vento_kmh,tempestade,radiacao,qualidade_com,oxigenio_pct,temp_interna,com_ativa,mod_en001,mod_sv002,mod_hb003,mod_lg006,mod_sc004,mod_mn005
+1,72,8,18,22,85,120,23,16,8,28,30,-45,22,0,normal,92,21.0,22.0,1,1,1,1,1,1,1
+2,68,8,14,18,91,120,23,16,8,28,30,-47,18,0,normal,89,21.0,22.1,1,1,1,1,1,1,1
+3,12,2,38,48,73,120,23,16,0,0,0,-52,50,1,alta,41,20.8,21.5,0,1,1,1,1,0,0
+4,0,0,42,54,54,120,23,16,0,0,0,-55,56,1,alta,38,20.6,21.2,0,1,1,1,0,0,0
+5,0,0,35,44,34,120,23,16,6,0,0,-53,45,1,muito_alta,32,20.4,20.8,0,1,1,1,0,0,0
+6,8,1,28,36,24,120,0,16,6,0,0,-51,37,1,alta,45,20.3,20.5,0,1,1,1,0,0,0
+7,45,5,16,20,38,120,23,16,8,18,20,-48,20,0,normal,76,20.9,21.8,1,1,1,1,1,1,1
+8,70,8,12,16,67,120,23,16,8,28,30,-44,16,0,normal,91,21.0,22.0,1,1,1,1,1,1,1

@@ -1,8 +1,8 @@
-import json
+import csv
 import os
 
 
-DADOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dados.json")
+DADOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dados.csv")
 
 
 # -----------------------------------------------------------
@@ -93,8 +93,47 @@ def exibir_pilha_criticos():
 def carregar_dados():
     if not os.path.exists(DADOS_PATH):
         raise FileNotFoundError(f"Arquivo nao encontrado: {DADOS_PATH}")
-    with open(DADOS_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    historico = []
+    with open(DADOS_PATH, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            historico.append({
+                "turno": int(row["turno"]),
+                "dados": {
+                    "energia": {
+                        "solar":   {"geracao_kw": float(row["solar_kw"]),  "paineis_ativos": int(row["paineis_ativos"])},
+                        "eolico":  {"geracao_kw": float(row["eolico_kw"]), "velocidade_vento": float(row["velocidade_vento"])},
+                        "bateria": {"carga_atual": float(row["bateria_atual"]), "capacidade_max": float(row["bateria_max"])},
+                    },
+                    "consumo": {
+                        "suporte_vida": float(row["consumo_sv"]),
+                        "habitacao":    float(row["consumo_hab"]),
+                        "logistica":    float(row["consumo_log"]),
+                        "ciencia":      float(row["consumo_cien"]),
+                        "mineracao":    float(row["consumo_min"]),
+                    },
+                    "clima": {
+                        "temperatura":           float(row["temperatura"]),
+                        "vento_kmh":             float(row["vento_kmh"]),
+                        "tempestade_areia":      row["tempestade"] == "1",
+                        "radiacao":              row["radiacao"],
+                        "qualidade_comunicacao": float(row["qualidade_com"]),
+                    },
+                    "habitat": {
+                        "oxigenio_pct":       float(row["oxigenio_pct"]),
+                        "temperatura_interna": float(row["temp_interna"]),
+                        "comunicacao_ativa":  int(row["com_ativa"]),
+                    },
+                    "modulos": {
+                        "MOD-EN-001": int(row["mod_en001"]),
+                        "MOD-SV-002": int(row["mod_sv002"]),
+                        "MOD-HB-003": int(row["mod_hb003"]),
+                        "MOD-LG-006": int(row["mod_lg006"]),
+                        "MOD-SC-004": int(row["mod_sc004"]),
+                        "MOD-MN-005": int(row["mod_mn005"]),
+                    },
+                },
+            })
+    return historico
 
 
 # -----------------------------------------------------------
