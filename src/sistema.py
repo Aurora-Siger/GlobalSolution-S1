@@ -21,17 +21,10 @@ MODULOS = {
 
 
 # -----------------------------------------------------------
-# 2. MAPA MODULO → CAMPO DE CONSUMO
-#    Usado para cruzar status binario com consumo registrado.
+# 2. MODULOS CRITICOS — IDs cujo FALHA eleva diagnostico
 # -----------------------------------------------------------
 
-MODULO_CONSUMO_MAP = {
-    "MOD-SV-002": "suporte_vida",
-    "MOD-HB-003": "habitacao",
-    "MOD-SC-004": "ciencia",
-    "MOD-MN-005": "mineracao",
-    "MOD-LG-006": "logistica",
-}
+MODULOS_CRITICOS_IDS = {"MOD-SV-002", "MOD-HB-003"}
 
 
 # -------------------------------------------------------
@@ -137,7 +130,13 @@ def carregar_dados():
 
 def _verificar_inconsistencias_turno(turno, d):
     msgs = []
-    for mod_id, campo in MODULO_CONSUMO_MAP.items():
+    for mod_id, campo in [
+        ("MOD-SV-002", "suporte_vida"),
+        ("MOD-HB-003", "habitacao"),
+        ("MOD-SC-004", "ciencia"),
+        ("MOD-MN-005", "mineracao"),
+        ("MOD-LG-006", "logistica"),
+    ]:
         if d["modulos"][mod_id] == 0 and d["consumo"][campo] > 0:
             nome = MODULOS[mod_id]["nome"]
             msgs.append(
@@ -247,8 +246,8 @@ def exibir_matriz(matriz):
 #    NOT: inverte o resultado da porta OR
 # -----------------------------------------------------------
 
-def porta_and(condicao_a, condicao_b, condicao_c):
-    return condicao_a and condicao_b and condicao_c
+def porta_and(condicao_a, condicao_b):
+    return condicao_a and condicao_b
 
 def porta_or(condicao_a, condicao_b):
     return condicao_a or condicao_b
@@ -280,16 +279,20 @@ def exibir_tabela_modulos(colonia):
 #
 #     Expressao booleana principal do diagnostico:
 #     EMERGENCIA = (reserva < 20 AND consumo > geracao) OR tempestade
+#                 OR modulo_critico_falhou
 #     NORMAL     = NOT(EMERGENCIA) AND NOT(consumo > geracao)
 # -------------------------------------------------------------------
 
-def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com):
+def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com, modulos):
     reserva_critica   = reserva_pct < 20
     consumo_alto      = consumo > geracao
     com_comprometida  = qualidade_com < 60
 
     # Porta AND: emergencia maxima requer reserva critica E consumo alto
-    emergencia_energia = porta_and(reserva_critica, consumo_alto, True)
+    emergencia_energia = porta_and(reserva_critica, consumo_alto)
+
+    # Modulos criticos (suporte a vida e habitat) em FALHA elevam para CRITICO
+    modulo_critico_falhou = any(modulos.get(m, 1) == 0 for m in MODULOS_CRITICOS_IDS)
 
     # Porta OR: alerta se energia baixa OU comunicacao falha
     ha_alerta = porta_or(consumo_alto, com_comprometida)
@@ -297,8 +300,14 @@ def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com)
     # Porta NOT: sem_alerta so se nao ha nenhuma condicao de alerta
     sem_alerta = porta_not(ha_alerta)
 
-    if emergencia_energia or tempestade:
+    if emergencia_energia or tempestade or modulo_critico_falhou:
         nivel = "CRITICO"
+        if modulo_critico_falhou:
+            falhos = [m for m in MODULOS_CRITICOS_IDS if modulos.get(m, 1) == 0]
+            for m in sorted(falhos):
+                print(f"  [CRITICO] Modulo {m} ({MODULOS[m]['nome']}) em FALHA.")
+            enfileirar_alerta("CRITICO", f"Modulo(s) critico(s) em falha: {', '.join(sorted(falhos))}")
+            empilhar_critico(f"Falha modulo critico: {', '.join(sorted(falhos))}")
         if tempestade:
             print("  [CRITICO] Tempestade de areia — paineis solares desligados.")
             print("            Sistema operando em reserva de bateria.")
@@ -418,7 +427,7 @@ def opcao_visualizar_colonia(historico):
     exibir_tabela_modulos(d)
 
     print("\n--- DIAGNOSTICO AUTOMATICO ---")
-    decisao_automatica(geracao, consumo, reserva, temp, qual_com)
+    decisao_automatica(geracao, consumo, reserva, temp, qual_com, d["modulos"])
 
     print("\n--- ANALISE DE ENERGIA ---")
     analisar_energia(geracao, consumo, bateria, d["consumo"])

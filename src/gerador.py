@@ -7,7 +7,7 @@ DADOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dados.csv")
 CABECALHO = [
     "turno", "solar_kw", "paineis_ativos", "eolico_kw", "velocidade_vento",
     "bateria_atual", "bateria_max", "consumo_sv", "consumo_hab", "consumo_log",
-    "consumo_cien", "consumo_min", "temperatura", "vento_kmh", "tempestade",
+    "consumo_cien", "consumo_min", "temperatura", "tempestade",
     "radiacao", "qualidade_com", "oxigenio_pct", "temp_interna", "com_ativa",
     "mod_en001", "mod_sv002", "mod_hb003", "mod_lg006", "mod_sc004", "mod_mn005",
 ]
@@ -59,7 +59,7 @@ def gerar_turno(turno, bateria, tempestade_anterior):
         turno, solar_kw, paineis, eolico_kw, vento_kmh,
         nova_bateria, CAPACIDADE_BATERIA,
         consumo_sv, consumo_hab, consumo_log, consumo_cien, consumo_min,
-        temperatura, vento_kmh, tempestade, radiacao, qual_com,
+        temperatura, tempestade, radiacao, qual_com,
         oxigenio_pct, temp_interna, com_ativa,
         1, 1, 1, 1, mod_sc004, mod_mn005,
     ]
@@ -101,7 +101,7 @@ def gerar_csv(n_turnos=6, seed=None):
     print(f"CSV gerado com {n_turnos} turnos em: {DADOS_PATH}")
     for linha in turnos:
         print(f"  Turno {linha[0]:>2} | solar={linha[1]:>5} kW | eolico={linha[3]:>5} kW | "
-              f"bateria={linha[5]:>5} kWh | tempestade={linha[14]}")
+              f"bateria={linha[5]:>5} kWh | tempestade={linha[13]}")
 
 
 if __name__ == "__main__":
