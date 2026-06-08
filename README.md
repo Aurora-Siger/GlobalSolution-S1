@@ -18,9 +18,9 @@
 
 A Colônia Aurora Siger é uma base experimental em Marte que opera com recursos energéticos limitados (painéis solares e turbinas eólicas) sob condições climáticas extremas — tempestades de areia frequentes, temperatura externa de −65 °C a −20 °C e radiação solar variável.
 
-O sistema monitora **6 módulos críticos** e **8 turnos de operação**, detectando automaticamente falhas, inconsistências nos dados de telemetria, situações de emergência energética e comunicação comprometida. Com base nos dados históricos, o sistema também prevê o comportamento da próxima janela operacional e emite recomendações priorizadas.
+O sistema monitora **6 módulos críticos** e **6 turnos de operação**, detectando automaticamente falhas, inconsistências nos dados de telemetria, situações de emergência energética e comunicação comprometida. Com base nos dados históricos, o sistema também prevê o comportamento da próxima janela operacional e emite recomendações priorizadas.
 
-**Inconsistência proposital incluída:** o turno 3 registra geração solar residual (12 kW) com tempestade ativa e apenas 2 painéis funcionando — os painéis deveriam estar desligados. O sistema detecta e sinaliza essa contradição automaticamente.
+**Inconsistência proposital incluída:** o gerador (`src/gerador.py`) injeta deliberadamente uma contradição nos dados simulados a cada execução — por exemplo, um módulo registrado como FALHA mas com consumo de energia positivo, ou geração solar acima de zero durante uma tempestade de areia. O sistema cruza as variáveis e sinaliza a inconsistência automaticamente na seção "Inconsistências Detectadas" da opção 1.
 
 ---
 
@@ -115,22 +115,88 @@ cd sgce
 python src/sistema.py
 
 # (Opcional) Regenerar os dados simulados
-python src/gerador.py        # gera 8 turnos por padrão
+python src/gerador.py        # gera 6 turnos por padrão
 python src/gerador.py 12     # gera 12 turnos
 ```
 
 ---
 
+## Funcionalidades — opções do menu
+
+### Opção 1 — Estado da colônia (turno atual)
+Exibe um painel completo do último turno registrado na telemetria:
+- Geração total (solar + eólico), consumo total e nível de bateria em %
+- Condições ambientais: temperatura externa, tempestade, radiação e qualidade de comunicação
+- Status do habitat: oxigênio, temperatura interna e link de comunicação
+- **Tabela de módulos** — lista os 6 módulos ordenados por prioridade operacional com status NORMAL/FALHA
+- **Diagnóstico automático** — classifica a missão em CRÍTICO, ALERTA ou NORMAL usando as regras booleanas e emite recomendações imediatas
+- **Análise de energia** — percentual de cobertura da geração sobre o consumo e autonomia estimada da bateria em horas, com detalhamento por sistema
+- **Inconsistências detectadas** — cruza variáveis para identificar contradições nos dados (ex: módulo em FALHA com consumo registrado). Inconsistëncias são geradas de forma proposital pelo *src/gerador.py*
+- **Fila de alertas** — exibe os alertas gerados no turno, ordenados por severidade (CRÍTICO primeiro)
+- **Pilha de eventos críticos** — mostra os últimos eventos críticos em ordem LIFO (mais recente no topo)
+
+### Opção 2 — Consultar módulo específico
+Permite busca por ID de módulo (ex: `MOD-SV-002`):
+- Exibe nome, prioridade, criticidade e status atual do módulo
+- Mostra o histórico de status (OK / FALHA) turno a turno ao longo de toda a telemetria
+
+### Opção 3 — Previsão por regressão linear
+Calcula a previsão para o próximo turno usando mínimos quadrados implementado manualmente (sem bibliotecas):
+1. Prevê a **velocidade do vento** pela tendência histórica dos turnos
+2. Estima a **geração eólica** com base na correlação vento × potência
+3. Usa a **média histórica** de geração solar como estimativa conservadora
+4. Prevê o **consumo total** pela tendência dos turnos anteriores
+- Se consumo previsto > geração prevista: calcula em quantas horas a bateria se esgota e enfileira um alerta
+- Se geração prevista cobre o consumo: informa o excedente estimado
+
+### Opção 4 — Log de eventos
+Exibe o registro histórico completo de eventos, ordenado por turno e severidade:
+- **Eventos PRE** — eventos de pré-missão lidos de `data/eventos.csv`: reinicialização de sistema, falha de sensor, mudança de prioridade e modo de economia
+- **Eventos dinâmicos** — gerados automaticamente a partir dos dados de telemetria: tempestades, falhas de módulo, alertas de bateria, comunicação comprometida e inconsistências detectadas
+- Tipos de severidade presentes: CRITICO, ALERTA e NORMAL
+
+### Opção 5 — Matriz de leituras
+Exibe uma matriz com as principais variáveis energéticas ao longo de todos os turnos:
+
+| Coluna | Descrição |
+|--------|-----------|
+| `solar_kw` | Geração solar no turno |
+| `eolico_kw` | Geração eólica no turno |
+| `bateria_pct` | Nível da bateria em % |
+| `consumo_total_kw` | Consumo agregado de todos os sistemas |
+| `temperatura` | Temperatura externa em °C |
+
+---
+
+## Geração dos dados simulados
+
+Os dados são gerados por `src/gerador.py` e salvos em dois arquivos na pasta `data/`:
+
+### `data/dados.csv` — telemetria por turno
+Cada linha representa um turno de operação. O gerador simula:
+
+- **Tempestade de areia**: probabilidade de 25 % por turno limpo, 60 % de continuação se já ativa. Durante a tempestade: painéis solares desligados ou com geração mínima, radiação alta/muito alta, comunicação comprometida (qualidade 30–55 %), módulos de ciência e mineração em FALHA
+- **Geração solar**: proporcional ao número de painéis ativos (0–8) × eficiência aleatória
+- **Geração eólica**: proporcional à velocidade do vento × fator de eficiência aleatório
+- **Bateria**: atualizada a cada turno com `bateria + (geração − consumo) × 0.4`, limitada entre 5 kWh e 120 kWh
+- **Inconsistência proposital**: o gerador sempre injeta uma contradição — geração solar > 0 durante tempestade, ou módulo em FALHA com consumo registrado
+
+### `data/eventos.csv` — log de pré-missão
+Gerado junto com `dados.csv`, contém 4 eventos fixos de pré-missão (turno 0) que registram ações realizadas antes do início da monitoração: reinicialização do ECLSS, falha de sensor corrigida, definição de prioridades e modo de economia de calibração.
+
+---
+
 ## Exemplo de entrada e saída
 
-### Entrada (trecho de `data/dados.csv` — turno 3)
+> Os dados são simulados aleatoriamente pelo `src/gerador.py` a cada execução. O exemplo abaixo é de uma execução de referência — os valores numéricos variam, mas o formato e o comportamento do sistema são sempre os mesmos.
 
-```
-turno, solar_kw, eolico_kw, bateria_atual, bateria_max, tempestade, radiacao,  qualidade_com
-    3,       12,        38,            47,         120,          1,     alta,             41
-```
+### Entrada (trecho de `data/dados.csv` — exemplo de turno com tempestade)
 
-### Saída do sistema (opção 1 — estado da colônia, turno 3)
+| turno | solar_kw | eolico_kw | bateria_atual | bateria_max | tempestade | radiacao | qualidade_com |
+|------:|---------:|----------:|-------------:|------------:|-----------:|:---------|-------------:|
+|     3 |       12 |        38 |           47 |         120 |          1 | alta     |            41 |
+
+### Saída do sistema (opção 1 — estado da colônia, exemplo com tempestade ativa)
 
 ```
 --------------------------------------
@@ -200,7 +266,7 @@ O sistema emite recomendações automáticas priorizadas de acordo com o nível 
 
 O desenvolvimento do SGCE evidenciou como a escolha de estrutura de dados impacta diretamente a eficiência do sistema: o uso de dicionário para o catálogo de módulos reduziu a complexidade de busca de O(n) para O(1), enquanto a fila e a pilha tornaram o fluxo de alertas determinístico e auditável.
 
-A implementação da regressão linear sem bibliotecas reforçou a compreensão do algoritmo de mínimos quadrados e revelou como dados de vento e geração possuem correlação forte, permitindo previsões úteis mesmo com histórico reduzido (8 turnos).
+A implementação da regressão linear sem bibliotecas reforçou a compreensão do algoritmo de mínimos quadrados e revelou como dados de vento e geração possuem correlação forte, permitindo previsões úteis mesmo com histórico reduzido (6 turnos).
 
 A inconsistência intencional (solar ativo durante tempestade) demonstrou a importância de validações cruzadas entre variáveis correlacionadas — prática essencial em sistemas críticos onde sensores podem falhar silenciosamente.
 

@@ -1,0 +1,10 @@
+turno,tipo,severidade,descricao
+0,REINICIALIZACAO,NORMAL,Sistema ECLSS reinicializado apos atualizacao de firmware — modulo operacional
+0,MUDANCA_PRIORIDADE,ALERTA,"Prioridade operacional definida: energia (P1), suporte a vida (P2) e habitat (P3) em nivel maximo"
+1,MODO_ECONOMIA,ALERTA,Modo de economia ativado — consumo (104 kW) supera geracao (71 kW)
+2,MODO_ECONOMIA,ALERTA,Modo de economia ativado — consumo (98 kW) supera geracao (51 kW)
+3,MODO_ECONOMIA,ALERTA,Modo de economia ativado — consumo (92 kW) supera geracao (66 kW)
+4,MODO_ECONOMIA,ALERTA,Modo de economia ativado — consumo (53 kW) supera geracao (17 kW)
+5,REINICIALIZACAO,NORMAL,Modulo MOD-MN-005 reinicializado com sucesso apos falha no turno anterior
+6,MODO_ECONOMIA,ALERTA,Modo de economia ativado — consumo (101 kW) supera geracao (60 kW)
+6,MODO_ECONOMIA,CRITICO,"Modo de emergencia ativado — bateria em 14%, desligando sistemas nao essenciais"

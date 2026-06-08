@@ -2,7 +2,8 @@ import csv
 import os
 
 
-DADOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dados.csv")
+DADOS_PATH   = os.path.join(os.path.dirname(__file__), "..", "data", "dados.csv")
+EVENTOS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "eventos.csv")
 
 
 # -----------------------------------------------------------
@@ -164,10 +165,22 @@ def detectar_inconsistencias(historico):
 
 # -----------------------------------------------------------
 # 7. LOG DE EVENTOS
+#    Eventos de pre-missao sao lidos de data/eventos.csv
+#    (gerado por gerador.py junto com dados.csv).
 # -----------------------------------------------------------
 
+def carregar_eventos_base():
+    if not os.path.exists(EVENTOS_PATH):
+        return []
+    with open(EVENTOS_PATH, newline="", encoding="utf-8") as f:
+        return [
+            {"turno": int(row["turno"]), "tipo": row["tipo"],
+             "severidade": row["severidade"], "descricao": row["descricao"]}
+            for row in csv.DictReader(f)
+        ]
+
 def gerar_log_eventos(historico):
-    eventos = []
+    eventos = carregar_eventos_base()
     for registro in historico:
         turno = registro["turno"]
         d     = registro["dados"]
@@ -544,7 +557,8 @@ def opcao_historico_eventos(historico):
     print(f"\n  {'TURNO':>6}  {'TIPO':<15}  {'SEVERIDADE':<10}  DESCRICAO")
     print("  " + "-" * 80)
     for ev in eventos:
-        print(f"  {ev['turno']:>6}  {ev['tipo']:<15}  {ev['severidade']:<10}  {ev['descricao']}")
+        turno_str = "PRE" if ev["turno"] == 0 else str(ev["turno"])
+        print(f"  {turno_str:>6}  {ev['tipo']:<18}  {ev['severidade']:<10}  {ev['descricao']}")
     print("-----------------------------------------------------------")
 
 
