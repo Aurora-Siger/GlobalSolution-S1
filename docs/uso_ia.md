@@ -1,4 +1,4 @@
-# Uso de Inteligência Artificial — SGCE
+# Uso de Inteligência Artificial — Global Solution 2026/1
 
 ## Ferramentas utilizadas
 
