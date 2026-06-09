@@ -578,7 +578,7 @@ def opcao_matriz_leituras(historico):
 def menu_principal(historico):
     while True:
         print("\n-------------------------------------")
-        print("  SGCE — SISTEMA DE MONITORAMENTO")
+        print("     SISTEMA DE MONITORAMENTO")
         print("       COLONIA AURORA SIGER")
         print("-------------------------------------")
         print("  [1] Visualizar estado da colonia")
