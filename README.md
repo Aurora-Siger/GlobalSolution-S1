@@ -256,9 +256,9 @@ O sistema emite recomendações automáticas priorizadas de acordo com o nível 
 
 ## Link do vídeo no YouTube
 
-<!-- [Assistir ao vídeo de apresentação](https://youtu.be/LINK_DO_VIDEO) -->
+[Assistir ao vídeo de apresentação](https://youtu.be/Hs87NC-OW2g)
 
-> Link será adicionado após publicação no YouTube.
+> O link também está disponível em [`docs/link_video.txt`](docs/link_video.txt).
 
 ---
 
