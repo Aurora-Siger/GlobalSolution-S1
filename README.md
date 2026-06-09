@@ -1,5 +1,5 @@
-# SGCE — Sistema de Gerenciamento e Controle Espacial
-### Colônia Aurora Siger · Global Solution 2026 · FIAP
+# Global Solution - 1º Semestre
+### Colônia Aurora Siger · Global Solution 2026/1 · FIAP
 
 ---
 
@@ -9,7 +9,7 @@
 |------|----|
 | Isabelle Caroline de Camargo Francisco | 572096 |
 | Matheus Lyncoln Souza Dias | 570765 |
-| Mirela Aparecida Bispo Miguel | 70830 |
+| Mirela Aparecida Bispo Miguel | 570830 |
 | Rodrigo Abrantes Mizerani | 571808 |
 
 ---
@@ -108,8 +108,8 @@ A previsão influencia diretamente a fila de alertas: se o consumo previsto supe
 
 ```bash
 # Clonar o repositório
-git clone <URL_DO_REPOSITORIO>
-cd sgce
+git clone https://github.com/Aurora-Siger/GlobalSolution-S1
+cd GlobalSolution-S1
 
 # Executar o sistema principal
 python src/sistema.py
@@ -264,7 +264,7 @@ O sistema emite recomendações automáticas priorizadas de acordo com o nível 
 
 ## Conclusões e aprendizados
 
-O desenvolvimento do SGCE evidenciou como a escolha de estrutura de dados impacta diretamente a eficiência do sistema: o uso de dicionário para o catálogo de módulos reduziu a complexidade de busca de O(n) para O(1), enquanto a fila e a pilha tornaram o fluxo de alertas determinístico e auditável.
+O desenvolvimento da primeira fase do Global Solution evidenciou como a escolha de estrutura de dados impacta diretamente a eficiência do sistema: o uso de dicionário para o catálogo de módulos reduziu a complexidade de busca de O(n) para O(1), enquanto a fila e a pilha tornaram o fluxo de alertas determinístico e auditável.
 
 A implementação da regressão linear sem bibliotecas reforçou a compreensão do algoritmo de mínimos quadrados e revelou como dados de vento e geração possuem correlação forte, permitindo previsões úteis mesmo com histórico reduzido (6 turnos).
 
