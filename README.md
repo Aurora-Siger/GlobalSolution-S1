@@ -2,7 +2,7 @@
 ### Colônia Aurora Siger · Global Solution 2026/1 · FIAP
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)
-![FIAP](https://img.shields.io/badge/FIAP-Global%20Solution-red)
+![FIAP](https://img.shields.io/badge/FIAP-ON-red)
 ![GlobalSolution](https://img.shields.io/badge/Global%20Solution-2026%2F1-orange)
 
 ---
