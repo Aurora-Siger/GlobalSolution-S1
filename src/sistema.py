@@ -22,7 +22,7 @@ MODULOS = {
 
 
 # -----------------------------------------------------------
-# 2. MODULOS CRITICOS — IDs cujo FALHA eleva diagnostico
+# 2. MODULOS CRITICOS - IDs cujo FALHA eleva diagnostico
 # -----------------------------------------------------------
 
 MODULOS_CRITICOS_IDS = {"MOD-SV-002", "MOD-HB-003"}
@@ -69,7 +69,7 @@ def exibir_pilha_criticos():
     if not pilha_criticos:
         print("  Nenhum evento critico registrado.")
         return
-    print(f"\n  Ultimos {len(pilha_criticos)} evento(s) critico(s) — ordem LIFO (mais recente primeiro):")
+    print(f"\n  Ultimos {len(pilha_criticos)} evento(s) critico(s) - ordem LIFO (mais recente primeiro):")
     for evento in reversed(pilha_criticos):
         print(f"    >> {evento}")
     pilha_criticos.clear()
@@ -190,14 +190,14 @@ def gerar_log_eventos(historico):
 
         if d["clima"]["tempestade_areia"]:
             eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "CRITICO",
-                            "descricao": "Tempestade de areia ativa — paineis desligados, operando em bateria"})
+                            "descricao": "Tempestade de areia ativa - paineis desligados, operando em bateria"})
 
         if bat_pct < 20:
             eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "CRITICO",
-                            "descricao": f"Bateria em {bat_pct:.0f}% — nivel CRITICO (abaixo de 20%)"})
+                            "descricao": f"Bateria em {bat_pct:.0f}% - nivel CRITICO (abaixo de 20%)"})
         elif bat_pct < 30:
             eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": "ALERTA",
-                            "descricao": f"Bateria em {bat_pct:.0f}% — abaixo do limite de seguranca (30%)"})
+                            "descricao": f"Bateria em {bat_pct:.0f}% - abaixo do limite de seguranca (30%)"})
 
         for mod_id, status in d["modulos"].items():
             if status == 0:
@@ -212,7 +212,7 @@ def gerar_log_eventos(historico):
             sev = None
         if sev:
             eventos.append({"turno": turno, "tipo": "ALERTA", "severidade": sev,
-                            "descricao": f"Qualidade de comunicacao: {qual:.0f}% — enlace comprometido"})
+                            "descricao": f"Qualidade de comunicacao: {qual:.0f}% - enlace comprometido"})
 
         for msg in _verificar_inconsistencias_turno(turno, d):
             eventos.append({"turno": turno, "tipo": "INCONSISTENCIA", "severidade": "CRITICO",
@@ -322,7 +322,7 @@ def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com,
             enfileirar_alerta("CRITICO", f"Modulo(s) critico(s) em falha: {', '.join(sorted(falhos))}")
             empilhar_critico(f"Falha modulo critico: {', '.join(sorted(falhos))}")
         if tempestade:
-            print("  [CRITICO] Tempestade de areia — paineis solares desligados.")
+            print("  [CRITICO] Tempestade de areia - paineis solares desligados.")
             print("            Sistema operando em reserva de bateria.")
         if emergencia_energia:
             print("  [CRITICO] Reserva critica e consumo acima da geracao.")
@@ -339,7 +339,7 @@ def decisao_automatica(geracao, consumo, reserva_pct, tempestade, qualidade_com,
             enfileirar_alerta("ALERTA", f"Consumo ({consumo} kW) acima da geracao ({geracao} kW)")
             empilhar_critico(f"Alerta energia: consumo={consumo}kW > geracao={geracao}kW")
         if com_comprometida:
-            print(f"  [ALERTA]  Qualidade de comunicacao: {qualidade_com}% — abaixo de 60%.")
+            print(f"  [ALERTA]  Qualidade de comunicacao: {qualidade_com}% - abaixo de 60%.")
             enfileirar_alerta("ALERTA", f"Comunicacao comprometida: {qualidade_com}%")
 
     elif geracao > consumo * 1.2 and sem_alerta:
@@ -408,7 +408,7 @@ def prever_consumo_turno(historico, turno_novo):
 
 def opcao_visualizar_colonia(historico):
     print("\n--------------------------------------")
-    print("  [1] ESTADO DA COLONIA — TURNO ATUAL")
+    print("  [1] ESTADO DA COLONIA - TURNO ATUAL")
     print("----------------------------------------")
 
     registro = historico[-1]
@@ -495,7 +495,7 @@ def opcao_consultar_modulo(historico):
 def opcao_executar_previsao(historico):
     print("\n-----------------------------------------------------------")
     print("  [3] PREVISAO POR REGRESSAO LINEAR")
-    print("      (Minimos quadrados — sem bibliotecas externas)")
+    print("      (Minimos quadrados - sem bibliotecas externas)")
     print("-----------------------------------------------------------")
 
     turno_proximo = historico[-1]["turno"] + 1
@@ -535,13 +535,13 @@ def opcao_executar_previsao(historico):
         delta = cons_previsto - geracao_total_prevista
         horas = bateria / delta if delta > 0 else float("inf")
         print(f"  ALERTA: consumo previsto ({cons_previsto:.1f} kW) supera geracao prevista ({geracao_total_prevista:.1f} kW).")
-        print(f"  Deficit de {delta:.1f} kW — reserva ({bateria:.0f} kWh) se esgotaria em {horas:.1f} hora(s).")
+        print(f"  Deficit de {delta:.1f} kW - reserva ({bateria:.0f} kWh) se esgotaria em {horas:.1f} hora(s).")
         print("  Recomendacao: reduzir consumo de modulos não essenciais antes do proximo turno.")
         enfileirar_alerta("ALERTA", f"Previsao T{turno_proximo}: consumo {cons_previsto:.1f} kW > geracao {geracao_total_prevista:.1f} kW")
     else:
         excedente = geracao_total_prevista - cons_previsto
         print(f"  OK: geracao prevista ({geracao_total_prevista:.1f} kW) cobre consumo previsto ({cons_previsto:.1f} kW).")
-        print(f"  Excedente estimado de {excedente:.1f} kW — armazenar na bateria.")
+        print(f"  Excedente estimado de {excedente:.1f} kW - armazenar na bateria.")
 
     print("\n--- ALERTAS PENDENTES ---")
     processar_fila_alertas()

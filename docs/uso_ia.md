@@ -1,8 +1,8 @@
-# Uso de Inteligência Artificial — Global Solution 2026/1
+# Uso de Inteligência Artificial - Global Solution 2026/1
 
 ## Ferramentas utilizadas
 
-- **Claude (Anthropic)** — assistente de IA utilizado como apoio ao longo do desenvolvimento.
+- **Claude (Anthropic)** - assistente de IA utilizado como apoio ao longo do desenvolvimento.
 
 ## Em quais partes a IA foi utilizada
 

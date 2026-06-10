@@ -17,7 +17,7 @@ def gerar_eventos(turnos):
 
     # Eventos fixos de pre-missao (turno 0)
     eventos.append({"turno": 0, "tipo": "REINICIALIZACAO", "severidade": "NORMAL",
-                    "descricao": "Sistema ECLSS reinicializado apos atualizacao de firmware — modulo operacional"})
+                    "descricao": "Sistema ECLSS reinicializado apos atualizacao de firmware - modulo operacional"})
     eventos.append({"turno": 0, "tipo": "MUDANCA_PRIORIDADE", "severidade": "ALERTA",
                     "descricao": "Prioridade operacional definida: energia (P1), suporte a vida (P2) e habitat (P3) em nivel maximo"})
 
@@ -34,17 +34,17 @@ def gerar_eventos(turnos):
         if tempestade and random.random() < 0.6:
             sensor = random.choice(SENSORES)
             eventos.append({"turno": turno, "tipo": "FALHA_SENSOR", "severidade": "ALERTA",
-                            "descricao": f"Falha de sensor de {sensor} durante tempestade de areia — leitura suspensa"})
+                            "descricao": f"Falha de sensor de {sensor} durante tempestade de areia - leitura suspensa"})
 
         # Consumo supera geracao: modo de economia ativado
         if consumo > geracao:
             eventos.append({"turno": turno, "tipo": "MODO_ECONOMIA", "severidade": "ALERTA",
-                            "descricao": f"Modo de economia ativado — consumo ({consumo} kW) supera geracao ({geracao:.0f} kW)"})
+                            "descricao": f"Modo de economia ativado - consumo ({consumo} kW) supera geracao ({geracao:.0f} kW)"})
 
         # Bateria critica: alerta de modo de emergencia
         if bat_pct < 20:
             eventos.append({"turno": turno, "tipo": "MODO_ECONOMIA", "severidade": "CRITICO",
-                            "descricao": f"Modo de emergencia ativado — bateria em {bat_pct:.0f}%, desligando sistemas nao essenciais"})
+                            "descricao": f"Modo de emergencia ativado - bateria em {bat_pct:.0f}%, desligando sistemas nao essenciais"})
 
         # Modulo se recuperou em relacao ao turno anterior: reinicializacao
         if modulos_anterior:
